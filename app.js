@@ -9,14 +9,32 @@ const logger = require('koa-logger')
 const index = require('./routes/index')
 const users = require('./routes/users')
 
+//mongoDB
+const mongoose = require('mongoose')
+const dbConfig = require('./dbs/config')
+
+
 //自己写的例子。。。
 const pv = require('./middleware/koa-pv')
 const m1 = require('./middleware/m1')
 const m2 = require('./middleware/m2')
 const m3 = require('./middleware/m3')
+
+//redis
+const session = require('koa-generic-session')
+const Redis = require('koa-redis')
+
+
 // error handler
 onerror(app)
 
+//redis处理session
+app.keys = ['keys','keys123'] //用作session加密处理 随便写俩值
+app.use(session({
+  key:'mt', //在cookie中存储的字段名
+  prefix:'mtpr',
+  store:new Redis()
+}))
 
 app.use(pv())
 app.use(m1())
@@ -61,6 +79,12 @@ app.use(async (ctx, next) => {
 // routes
 app.use(index.routes(), index.allowedMethods())
 app.use(users.routes(), users.allowedMethods())
+
+
+//MONGO链接
+mongoose.connect(dbConfig.dbs,{
+  useNewUrlParser:true
+})
 
 // error-handling
 app.on('error', (err, ctx) => {
